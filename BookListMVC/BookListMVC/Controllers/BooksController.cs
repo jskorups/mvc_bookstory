@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BookListMVC.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +11,36 @@ namespace BookListMVC.Controllers
     public class BooksController : Controller
     {
 
+        private readonly ApplicationDBContext _db;
+
+        public BooksController(ApplicationDBContext db)
+        {
+            _db = db;
+        }
 
         public IActionResult Index()
         {
             return View();
         }
+        #region API Calls
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            return Json(new { data = await _db.Books.ToListAsync() });
+        }
+        [HttpDelete]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var bookFromDb = await _db.Books.FirstOrDefaultAsync(x => x.Id == id);
+            if (bookFromDb == null)
+            {
+                return Json(new { success = false, message = "Error" });
+            }
+            _db.Books.Remove(bookFromDb);
+            await _db.SaveChangesAsync();
+            return Json(new { success = true, message = "Delete succesfull" });
+
+        }
+        #endregion
     }
 }
